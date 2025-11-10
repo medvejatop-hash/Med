@@ -48,5 +48,5 @@ def echo_all(message):
 
 # Запускаем бота
 if __name__ == "__main__":
-    print("Бот запущен...")
+    print("Бот запущен...") 
     bot.infinity_polling()
