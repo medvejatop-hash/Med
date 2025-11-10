@@ -1,0 +1,52 @@
+import os
+import telebot
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Загружаем переменные из файла .env
+load_dotenv()
+
+# Получаем токены из переменных окружения
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
+# Проверяем, что токены загружены
+if not BOT_TOKEN:
+    raise ValueError("Не найден BOT_TOKEN. Проверьте файл .env")
+if not GEMINI_API_KEY:
+    raise ValueError("Не найден GEMINI_API_KEY. Проверьте файл .env")
+
+# Инициализируем бота и Gemini
+bot = telebot.TeleBot(BOT_TOKEN)
+genai.configure(api_key=GEMINI_API_KEY)
+
+# Создаем модель Gemini
+model = genai.GenerativeModel('gemini-pro')
+
+# Обработчик команды /start
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "Привет! Я бот с искусственным интеллектом Gemini. Просто напиши мне что-нибудь, и я отвечу!")
+
+# Обработчик всех текстовых сообщений
+@bot.message_handler(func=lambda message: True)
+def echo_all(message):
+    try:
+        # Показываем, что бот печатает
+        bot.send_chat_action(message.chat.id, 'typing')
+        
+        # Отправляем запрос пользователя в Gemini
+        response = model.generate_content(message.text)
+        
+        # Отправляем ответ от Gemini пользователю
+        bot.reply_to(message, response.text)
+    
+    except Exception as e:
+        # Если произошла ошибка, сообщаем пользователю
+        print(f"Произошла ошибка: {e}")
+        bot.reply_to(message, "Извините, произошла ошибка при обработке вашего запроса.")
+
+# Запускаем бота
+if __name__ == "__main__":
+    print("Бот запущен...")
+    bot.infinity_polling()
